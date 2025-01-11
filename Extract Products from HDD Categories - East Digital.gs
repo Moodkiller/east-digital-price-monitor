@@ -32,12 +32,12 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
     sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
-    sheet.appendRow(['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)']);
+    sheet.appendRow(['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status']);
   } else {
-    var firstRow = sheet.getRange(1, 1, 1, 6).getValues()[0];
-    if (firstRow[0] !== 'Product Name' || firstRow[1] !== 'Regular Price (NZD)' || firstRow[2] !== 'Sale Price (NZD)' || firstRow[3] !== 'Date' || firstRow[4] !== 'Drive Size (TB)' || firstRow[5] !== 'Price per TB (NZD)') {
+    var firstRow = sheet.getRange(1, 1, 1, 7).getValues()[0];
+    if (firstRow[0] !== 'Product Name' || firstRow[1] !== 'Regular Price (NZD)' || firstRow[2] !== 'Sale Price (NZD)' || firstRow[3] !== 'Date' || firstRow[4] !== 'Drive Size (TB)' || firstRow[5] !== 'Price per TB (NZD)' || firstRow[6] !== 'Stock Status') {
       sheet.insertRowBefore(1);
-      sheet.getRange(1, 1, 1, 6).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)']]);
+      sheet.getRange(1, 1, 1, 7).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status']]);
     }
   }
 
@@ -62,6 +62,14 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
         var regularPriceUSD = $(this).find('.price-item--regular').text().trim();
         var salePriceUSD = $(this).find('.price__sale').text().trim();
 
+        var stockStatus = "In Stock";
+        var priceWrapper = $(this).find('.price');
+        
+        if (priceWrapper.find('.badge:contains("Sold out")').length > 0 || 
+            priceWrapper.hasClass('price--sold-out')) {
+          stockStatus = "Out of Stock";
+        }
+
         if (productName && productUrl && regularPriceUSD) {
           var escapedProductName = productName.replace(/"/g, '""');
           var productNameWithLink = `=HYPERLINK("${productUrl}", "${escapedProductName}")`;
@@ -79,7 +87,7 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
           var driveSizeMatch = productName.match(/(\d+)\s?TB/i);
           var driveSize = driveSizeMatch ? parseInt(driveSizeMatch[1]) : '';
 
-          sheet.appendRow([productNameWithLink, regularPriceNZD, salePriceNZD, date, driveSize]);
+          sheet.appendRow([productNameWithLink, regularPriceNZD, salePriceNZD, date, driveSize, '', stockStatus]);
         }
       });
       page++;
