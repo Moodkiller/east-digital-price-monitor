@@ -5,19 +5,14 @@ function extractProducts() {
     { url: "https://east-digital.myshopify.com/collections/pulls-hdd", sheetName: "Category - HDD(Pulls)" }
   ];
 
-  var conversionRate = fetchExchangeRate('USD', 'NZD');
-  var correctionFactor = 1.021; // Your updated correction factor
-  var correctedConversionRate = conversionRate * correctionFactor;
 
-  Logger.log("Fetched Conversion Rate: " + conversionRate);
-  Logger.log("Corrected Conversion Rate: " + correctedConversionRate);
 
   urls.forEach(function(entry) {
-    processUrl(entry.url, entry.sheetName, correctedConversionRate);
+    processUrl(entry.url, entry.sheetName);
   });
 }
 
-function processUrl(baseUrl, sheetName, correctedConversionRate) {
+function processUrl(baseUrl, sheetName) {
   var options = {
     'method': 'get',
     'headers': {
@@ -41,6 +36,8 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
       sheet.getRange(1, 1, 1, 6).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)']]);
     }
   }
+  
+
 
   while (hasMorePages) {
     var url = baseUrl + "?page=" + page;
@@ -48,6 +45,7 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
     var html = response.getContentText();
     var $ = Cheerio.load(html);
     var products = $(".grid__item");
+    
 
     var noProductsMessage = $("#ProductGridContainer .collection--empty .title.title--primary").length > 0;
 
@@ -60,19 +58,17 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
         if (productUrl) {
           productUrl = "https://east-digital.myshopify.com" + productUrl;
         }
-        var regularPriceUSD = $(this).find('.price-item--regular').text().trim();
-        var salePriceUSD = $(this).find('.price__sale').text().trim();
+        var regularPrice = $(this).find('.price-item--regular').text().trim();
+        var salePrice = $(this).find('.price__sale').text().trim();
 
-        if (productName && productUrl && regularPriceUSD) {
+        if (productName && productUrl && regularPrice) {
           var escapedProductName = productName.replace(/"/g, '""');
           var productNameWithLink = `=HYPERLINK("${productUrl}", "${escapedProductName}")`;
-          var regularPriceNZD = convertToNZD(regularPriceUSD, correctedConversionRate);
-          var salePriceNZD = salePriceUSD === "$0.00 USD" ? regularPriceNZD : convertToNZD(salePriceUSD, correctedConversionRate);
 
           Logger.log("Product Name: " + productName);
           Logger.log("Product URL: " + productUrl);
-          Logger.log("Regular Price USD: " + regularPriceUSD + " -> NZD: " + regularPriceNZD);
-          Logger.log("Sale Price USD: " + salePriceUSD + " -> NZD: " + salePriceNZD);
+          Logger.log("Regular Price (NZD): " + regularPrice);
+          Logger.log("Sale Price (NZD): " + salePrice);
 
           var date = new Date().toLocaleDateString();
 
@@ -80,7 +76,7 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
           var driveSizeMatch = productName.match(/(\d+)\s?TB/i);
           var driveSize = driveSizeMatch ? parseInt(driveSizeMatch[1]) : '';
 
-          sheet.appendRow([productNameWithLink, regularPriceNZD, salePriceNZD, date, driveSize]);
+          sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize]);
         }
       });
       page++;
@@ -94,17 +90,4 @@ function processUrl(baseUrl, sheetName, correctedConversionRate) {
     var formula = `=IF(C${i}<1, B${i}/E${i}, MIN(B${i}, C${i})/E${i})`;
     sheet.getRange(i, 6).setFormula(formula);
   }
-}
-
-function fetchExchangeRate(fromCurrency, toCurrency) {
-  var url = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
-  var response = UrlFetchApp.fetch(url);
-  var data = JSON.parse(response.getContentText());
-  return data.rates[toCurrency];
-}
-
-function convertToNZD(priceUSD, conversionRate) {
-  var price = parseFloat(priceUSD.replace(/[^0-9.-]+/g, ""));
-  var priceNZD = (price * conversionRate).toFixed(2);
-  return priceNZD;
 }
