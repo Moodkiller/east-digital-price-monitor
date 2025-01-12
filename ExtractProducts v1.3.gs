@@ -24,6 +24,7 @@ function processUrl(baseUrl, sheetName) {
 
   var page = 1;
   var hasMorePages = true;
+  var onSaleColour = "#fdff32";
 
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
@@ -62,6 +63,7 @@ function processUrl(baseUrl, sheetName) {
         regularPrice = parseFloat(regularPrice.replace(/[^0-9.-]+/g, ""));
         salePrice = salePrice ? parseFloat(salePrice.replace(/[^0-9.-]+/g, "")) : 0;
 
+        // In Stock Check
         var stockStatus = "In Stock";
         var priceWrapper = $(this).find('.price');
         
@@ -69,6 +71,9 @@ function processUrl(baseUrl, sheetName) {
             priceWrapper.hasClass('price--sold-out')) {
           stockStatus = "Out of Stock";
         }
+
+        // On Sale Check
+        var onSale = $(this).find('.price').hasClass('price--on-sale')
 
         if (productName && productUrl && regularPrice) {
           var escapedProductName = productName.replace(/"/g, '""');
@@ -86,6 +91,14 @@ function processUrl(baseUrl, sheetName) {
           var driveSize = driveSizeMatch ? parseInt(driveSizeMatch[1]) : '';
 
           sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize, '', stockStatus]);
+          
+          // Highlight row if on sale
+          if (onSale){
+            var range = sheet.getDataRange();
+            var lastRowNum = range.getLastRow();
+            var lastRowRange = sheet.getRange(`A${lastRowNum}:G${lastRowNum}`);
+            lastRowRange.setBackground(onSaleColour);
+          }
         }
       });
       page++;
