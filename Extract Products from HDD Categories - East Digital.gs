@@ -60,6 +60,10 @@ function processUrl(baseUrl, sheetName) {
         }
         var regularPrice = $(this).find('.price-item--regular').text().trim();
         var salePrice = $(this).find('.price__sale').text().trim();
+        
+        // Converting prices to numbers
+        regularPrice = parseFloat(regularPrice.replace(/[^0-9.-]+/g, ""));
+        salePrice = salePrice ? parseFloat(salePrice.replace(/[^0-9.-]+/g, "")) : 0;
 
         var stockStatus = "In Stock";
         var priceWrapper = $(this).find('.price');
