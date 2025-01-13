@@ -5,23 +5,24 @@ function extractProducts() {
     { url: "https://east-digital.myshopify.com/collections/pulls-hdd", sheetName: "Category - HDD(Pulls)" }
   ];
 
-  urls.forEach(function(entry) {
-    processUrl(entry.url, entry.sheetName);
-  });
+  var conversionRate = fetchExchangeRate('USD', 'NZD');
+  var correctionFactor = 1.021; // Your updated correction factor
+  var correctedConversionRate = conversionRate * correctionFactor;
 
-  // Sort each sheet by date after processing all URLs
+  Logger.log("Fetched Conversion Rate: " + conversionRate);
+  Logger.log("Corrected Conversion Rate: " + correctedConversionRate);
+
   urls.forEach(function(entry) {
-    sortSheetsByDate(entry.sheetName);
+    processUrl(entry.url, entry.sheetName, correctedConversionRate);
   });
 }
 
-function processUrl(baseUrl, sheetName) {
+function processUrl(baseUrl, sheetName, correctedConversionRate) {
   var options = {
     'method': 'get',
     'headers': {
       'Accept-Language': 'en-NZ',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-      'Cookie': 'localization=NZ'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
     }
   };
 
@@ -31,12 +32,12 @@ function processUrl(baseUrl, sheetName) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
     sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
-    sheet.appendRow(['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status', 'On Sale']);
+    sheet.appendRow(['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)']);
   } else {
-    var firstRow = sheet.getRange(1, 1, 1, 8).getValues()[0];
-    if (firstRow[0] !== 'Product Name' || firstRow[1] !== 'Regular Price (NZD)' || firstRow[2] !== 'Sale Price (NZD)' || firstRow[3] !== 'Date' || firstRow[4] !== 'Drive Size (TB)' || firstRow[5] !== 'Price per TB (NZD)' || firstRow[6] !== 'Stock Status' || firstRow[7] !== 'On Sale') {
+    var firstRow = sheet.getRange(1, 1, 1, 6).getValues()[0];
+    if (firstRow[0] !== 'Product Name' || firstRow[1] !== 'Regular Price (NZD)' || firstRow[2] !== 'Sale Price (NZD)' || firstRow[3] !== 'Date' || firstRow[4] !== 'Drive Size (TB)' || firstRow[5] !== 'Price per TB (NZD)') {
       sheet.insertRowBefore(1);
-      sheet.getRange(1, 1, 1, 8).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status', 'On Sale']]);
+      sheet.getRange(1, 1, 1, 6).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)']]);
     }
   }
 
@@ -58,28 +59,19 @@ function processUrl(baseUrl, sheetName) {
         if (productUrl) {
           productUrl = "https://east-digital.myshopify.com" + productUrl;
         }
-        var regularPrice = $(this).find('.price-item--regular').text().trim();
-        var salePrice = $(this).find('.price__sale').text().trim();
-        
-        // Converting prices to numbers
-        regularPrice = parseFloat(regularPrice.replace(/[^0-9.-]+/g, ""));
-        salePrice = salePrice ? parseFloat(salePrice.replace(/[^0-9.-]+/g, "")) : 0;
+        var regularPriceUSD = $(this).find('.price-item--regular').text().trim();
+        var salePriceUSD = $(this).find('.price__sale').text().trim();
 
-        // In Stock Check
-        var stockStatus = "In Stock";
-        var priceWrapper = $(this).find('.price');
-        
-        if (priceWrapper.find('.badge:contains("Sold out")').length > 0 || 
-            priceWrapper.hasClass('price--sold-out')) {
-          stockStatus = "Out of Stock";
-        }
-
-        // Check if the product is on sale
-        var onSale = $(this).find('.badge:contains("Sale")').length > 0 ? "Yes" : "No";
-
-        if (productName && productUrl && regularPrice) {
+        if (productName && productUrl && regularPriceUSD) {
           var escapedProductName = productName.replace(/"/g, '""');
           var productNameWithLink = `=HYPERLINK("${productUrl}", "${escapedProductName}")`;
+          var regularPriceNZD = convertToNZD(regularPriceUSD, correctedConversionRate);
+          var salePriceNZD = salePriceUSD === "$0.00 USD" ? regularPriceNZD : convertToNZD(salePriceUSD, correctedConversionRate);
+
+          Logger.log("Product Name: " + productName);
+          Logger.log("Product URL: " + productUrl);
+          Logger.log("Regular Price USD: " + regularPriceUSD + " -> NZD: " + regularPriceNZD);
+          Logger.log("Sale Price USD: " + salePriceUSD + " -> NZD: " + salePriceNZD);
 
           var date = new Date().toLocaleDateString();
 
@@ -87,10 +79,7 @@ function processUrl(baseUrl, sheetName) {
           var driveSizeMatch = productName.match(/(\d+)\s?TB/i);
           var driveSize = driveSizeMatch ? parseInt(driveSizeMatch[1]) : '';
 
-          Logger.log("Product URL: " + productUrl);
-          Logger.log("Product Name: " + productName + " | Regular Price (NZD): " + regularPrice + " | Sale Price (NZD): " + salePrice + " | Date: " + date + " | Drive Size: " + driveSize + " | Stock Status: " + stockStatus + " | On Sale: " + onSale );
-
-          sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize, stockStatus, onSale]);
+          sheet.appendRow([productNameWithLink, regularPriceNZD, salePriceNZD, date, driveSize]);
         }
       });
       page++;
@@ -106,10 +95,15 @@ function processUrl(baseUrl, sheetName) {
   }
 }
 
-function sortSheetsByDate(sheetName) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  if (sheet) {
-    var range = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
-    range.sort({ column: 4, ascending: false });
-  }
+function fetchExchangeRate(fromCurrency, toCurrency) {
+  var url = `https://api.exchangerate-api.com/v4/latest/${fromCurrency}`;
+  var response = UrlFetchApp.fetch(url);
+  var data = JSON.parse(response.getContentText());
+  return data.rates[toCurrency];
+}
+
+function convertToNZD(priceUSD, conversionRate) {
+  var price = parseFloat(priceUSD.replace(/[^0-9.-]+/g, ""));
+  var priceNZD = (price * conversionRate).toFixed(2);
+  return priceNZD;
 }
