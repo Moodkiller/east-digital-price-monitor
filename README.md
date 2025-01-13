@@ -26,7 +26,7 @@ This is for all the DataHoarders and "lowest price per TB" HDD hunters. I've mad
 
 * ~Pull stock status (in or out of stock) | [Github PR](https://github.com/Moodkiller/east-digital-price-monitor/pull/1)~
 * Column / Cell formatting if a drive is on sale 
-* Obtain NZD from website instead of calculating it (room for error) | [Github PR](https://github.com/Moodkiller/east-digital-price-monitor/pull/2)
+* ~Obtain NZD from website instead of calculating it (room for error) | [Github PR](https://github.com/Moodkiller/east-digital-price-monitor/pull/2)~
 
 Feedback welcomed, feel free to make a copy and use as you wish. 
 
