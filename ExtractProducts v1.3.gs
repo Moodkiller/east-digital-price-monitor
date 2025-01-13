@@ -28,12 +28,12 @@ function processUrl(baseUrl, sheetName) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
     sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
-    sheet.appendRow(['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status']);
+    sheet.appendRow(['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status', 'On Sale']);
   } else {
     var firstRow = sheet.getRange(1, 1, 1, 7).getValues()[0];
-    if (firstRow[0] !== 'Product Name' || firstRow[1] !== 'Regular Price (NZD)' || firstRow[2] !== 'Sale Price (NZD)' || firstRow[3] !== 'Date' || firstRow[4] !== 'Drive Size (TB)' || firstRow[5] !== 'Price per TB (NZD)' || firstRow[6] !== 'Stock Status') {
+    if (firstRow[0] !== 'Product Name' || firstRow[1] !== 'Regular Price (NZD)' || firstRow[2] !== 'Sale Price (NZD)' || firstRow[3] !== 'Date' || firstRow[4] !== 'Drive Size (TB)' || firstRow[5] !== 'Price per TB (NZD)' || firstRow[6] !== 'Stock Status' || firstRow[7] !== 'On Sale') {
       sheet.insertRowBefore(1);
-      sheet.getRange(1, 1, 1, 7).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status']]);
+      sheet.getRange(1, 1, 1, 8).setValues([['Product Name', 'Regular Price (NZD)', 'Sale Price (NZD)', 'Date', 'Drive Size (TB)', 'Price per TB (NZD)', 'Stock Status', 'On Sale']]);
     }
   }
 
@@ -62,6 +62,7 @@ function processUrl(baseUrl, sheetName) {
         regularPrice = parseFloat(regularPrice.replace(/[^0-9.-]+/g, ""));
         salePrice = salePrice ? parseFloat(salePrice.replace(/[^0-9.-]+/g, "")) : 0;
 
+        // In Stock Check
         var stockStatus = "In Stock";
         var priceWrapper = $(this).find('.price');
         
@@ -69,6 +70,9 @@ function processUrl(baseUrl, sheetName) {
             priceWrapper.hasClass('price--sold-out')) {
           stockStatus = "Out of Stock";
         }
+
+        // Check if the product is on sale
+        var onSale = $(this).find('.badge:contains("Sale")').length > 0 ? "Yes" : "No";
 
         if (productName && productUrl && regularPrice) {
           var escapedProductName = productName.replace(/"/g, '""');
@@ -85,7 +89,7 @@ function processUrl(baseUrl, sheetName) {
           var driveSizeMatch = productName.match(/(\d+)\s?TB/i);
           var driveSize = driveSizeMatch ? parseInt(driveSizeMatch[1]) : '';
 
-          sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize, '', stockStatus]);
+          sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize, '', stockStatus, onSale]);
         }
       });
       page++;
