@@ -72,8 +72,9 @@ function processUrl(baseUrl, sheetName) {
           stockStatus = "Out of Stock";
         }
 
-        // On Sale Check
-        var onSale = $(this).find('.price').hasClass('price--on-sale') ? "Yes" : "No";
+        // Check if the product is on sale
+        var onSale = $(this).find('.badge:contains("Sale")').length > 0 ? "Yes" : "No";
+        // var onSale = $(this).find('.price').hasClass('price--on-sale') ? "Yes" : "No";
 
         if (productName && productUrl && regularPrice) {
           var escapedProductName = productName.replace(/"/g, '""');
