@@ -24,7 +24,6 @@ function processUrl(baseUrl, sheetName) {
 
   var page = 1;
   var hasMorePages = true;
-  var onSaleColour = "#fdff32";
 
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   if (!sheet) {
