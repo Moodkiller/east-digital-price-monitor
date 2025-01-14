@@ -90,7 +90,7 @@ function processUrl(baseUrl, sheetName) {
           Logger.log("Product URL: " + productUrl);
           Logger.log("Product Name: " + productName + " | Regular Price (NZD): " + regularPrice + " | Sale Price (NZD): " + salePrice + " | Date: " + date + " | Drive Size: " + driveSize + " | Stock Status: " + stockStatus + " | On Sale: " + onSale );
 
-          sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize, stockStatus, onSale]);
+          sheet.appendRow([productNameWithLink, regularPrice, salePrice, date, driveSize, '', stockStatus, onSale]);
         }
       });
       page++;
