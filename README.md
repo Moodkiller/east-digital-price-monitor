@@ -6,21 +6,21 @@ This is for all the DataHoarders and "lowest price per TB" HDD hunters. I've mad
 
 ## Features:
 
-* Tables can be sorted and filtered by Date, Drive Size, Price Per TB, Price, and Sale Price
-* Pivot Table per category for consolidated stats per unique product
-* Script is adaptable to any other similar Shopify website (see source code linked below)
+* Tables can be sorted and filtered by Date, Drive Size, Price Per TB, Prices, Stock Status, and Sale Status.
+* Pivot Table per category for consolidated stats per unique product, sorted by lowest Price Per TB
+* Script is adaptable to any other similar Shopify website
 * Added bonus, even though the sale prices are hidden on the website, it is still in the page source code, the script will parse for this info as well, so you can see the last sale price
 * Products are hyperlinked with previews (no affiliate links)
 * HDD Lookup table - enter your desired size and it will spit out the lowest price, date and link to the relative cell
-* Pagination handling - script will go through as many pages of listings as there are in each category
+* Pagination handling - script will go through as many pages of listings as there are in each category automatically
+* Sheet is automatically sorted by Date, newest at the top to save scrolling
 
 
 ## Things to Note:
 
-1. I was unable to "trick" the website into pulling NZD, so the script uses the current USD -> NZD exchange rate + "a Shopify correction rate" to get the prices as close to what we see when browsing the website. 
-2. The aforementioned prices are then rounded up in tables (same as the website)
-3. Due to the way the prices are sourced, I'd recommend just using the Sheet solely for comparisons. I.e the actual HDD price may be $1 higher or lower on any given day, but because the the whole sheet uses a correction rate, the prices are all relative. In theory, the cheapest HDD should still be the cheapest. 
-3. Script automatically runs once a day (7pm-8pm each day)
+1. Script automatically runs once a day (7pm-8pm NZDT)
+2. Price Per TB calculation is always based off the lowest value between Regular and Sale prices
+3. Still a WIP
 
 ## TODO (i.e if someone smarter than me can help, that would be awesome):
 
